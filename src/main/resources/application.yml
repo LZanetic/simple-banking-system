@@ -1,0 +1,14 @@
+spring:
+  application:
+    name:
+      simple-banking-system: simple-banking-system
+  datasource:
+    url: jdbc:h2:mem:mydb
+    username: sa
+    password: pass
+    driverClassName: org.h2.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    defer-datasource-initialization: true
+  h2:
+    console.enabled: true
