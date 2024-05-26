@@ -11,4 +11,6 @@ public interface TransactionMapper {
     TransactionMapper INSTANCE = Mappers.getMapper(TransactionMapper.class);
 
     Transaction mapToTransactionEntity(TransactionDTO transactionDTO);
+
+    TransactionDTO mapToTransactionDTO(Transaction transaction);
 }

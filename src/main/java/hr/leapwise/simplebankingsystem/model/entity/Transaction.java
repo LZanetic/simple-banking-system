@@ -1,6 +1,8 @@
 package hr.leapwise.simplebankingsystem.model.entity;
 
 import jakarta.persistence.*;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,7 +16,7 @@ public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long transactionId;
-    private double amount;
+    private BigDecimal amount;
     private String currencyId;
     private String message;
     private LocalDateTime timestamp;

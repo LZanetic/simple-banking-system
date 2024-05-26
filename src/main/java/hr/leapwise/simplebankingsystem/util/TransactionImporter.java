@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -69,7 +70,7 @@ public class TransactionImporter {
 
             LocalDateTime timestamp = LocalDateTime.parse(dto.getTimestamp(), formatter);
 
-            return new Transaction(null, dto.getAmount(), dto.getCurrencyId(), dto.getMessage(), timestamp, senderAccount.getAccountId(), receiverAccount.getAccountId());
+            return new Transaction(null, BigDecimal.valueOf(dto.getAmount()), dto.getCurrencyId(), dto.getMessage(), timestamp, senderAccount.getAccountId(), receiverAccount.getAccountId());
         }).collect(Collectors.toList());
     }
 
