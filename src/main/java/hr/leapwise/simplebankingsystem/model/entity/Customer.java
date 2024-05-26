@@ -20,6 +20,6 @@ public class Customer {
     private String email;
     private String phoneNumber;
 
-    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "customerId", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Account> accounts;
 }

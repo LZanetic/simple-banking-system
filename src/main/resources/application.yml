@@ -12,3 +12,7 @@ spring:
     defer-datasource-initialization: true
   h2:
     console.enabled: true
+
+server:
+  servlet:
+    context-path: /simple-banking-system

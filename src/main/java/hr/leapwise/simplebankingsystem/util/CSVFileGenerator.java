@@ -10,7 +10,6 @@ public class CSVFileGenerator {
 
     private static final int NUM_RECORDS = 100000;
     private static final int NUM_ACCOUNTS = 100;
-    private static final String[] CURRENCIES = {"USD", "EUR", "GBP", "JPY", "HRK"};
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
     public static void main(String[] args) {
@@ -32,14 +31,13 @@ public class CSVFileGenerator {
                 long receiverAccountId;
                 do {
                     receiverAccountId = random.nextInt(NUM_ACCOUNTS) + 1;
-                } while (senderAccountId == receiverAccountId); // Ensure sender and receiver are not the same
+                } while (senderAccountId == receiverAccountId);
 
-                double amount = Math.round(random.nextDouble() * 10000 * 100) / 100.0; // Random amount up to 10000 with 2 decimal places
-                String currencyId = CURRENCIES[random.nextInt(CURRENCIES.length)];
+                double amount = Math.round(random.nextDouble() * 10000 * 100) / 100.0;
                 String message = "Sample transaction message " + i;
                 String timestamp = LocalDateTime.now().minusDays(random.nextInt(365)).format(formatter);
 
-                writer.write(String.format("%d,%d,%d,%.2f,%s,%s,%s\n", i, senderAccountId, receiverAccountId, amount, currencyId, message, timestamp));
+                writer.write(String.format("%d,%d,%d,%.2f,%s,%s,%s\n", i, senderAccountId, receiverAccountId, amount, "EUR", message, timestamp));
             }
         } catch (IOException e) {
             e.printStackTrace();

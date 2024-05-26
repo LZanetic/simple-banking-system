@@ -19,15 +19,14 @@ public class Account {
     private String accountType;
     private double balance;
     private double pastMonthTurnover;
-
-    @ManyToOne
+    private String currencyId;
     @JoinColumn(name = "customer_id")
-    private Customer customer;
+    private Long customerId;
 
-    @OneToMany(mappedBy = "senderAccount", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "senderAccountId", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Transaction> sentTransactions;
 
-    @OneToMany(mappedBy = "receiverAccount", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "receiverAccountId", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Transaction> receivedTransactions;
 }
 
