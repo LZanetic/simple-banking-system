@@ -4,7 +4,7 @@ import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import hr.leapwise.simplebankingsystem.dao.AccountRepository;
 import hr.leapwise.simplebankingsystem.dao.TransactionRepository;
-import hr.leapwise.simplebankingsystem.model.dto.TransactionDTO;
+import hr.leapwise.simplebankingsystem.model.dto.TransactionCsvDTO;
 import hr.leapwise.simplebankingsystem.model.entity.Account;
 import hr.leapwise.simplebankingsystem.model.entity.Transaction;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +33,7 @@ public class TransactionImporter {
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
     public void importTransactions(String fileName) throws IOException {
-        List<TransactionDTO> transactionDTOs = parseCSV(fileName);
+        List<TransactionCsvDTO> transactionDTOs = parseCSV(fileName);
         List<Transaction> transactions = mapToTransactions(transactionDTOs);
 
         ExecutorService executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
@@ -50,17 +50,17 @@ public class TransactionImporter {
         executor.shutdown();
     }
 
-    private List<TransactionDTO> parseCSV(String fileName) throws IOException {
+    private List<TransactionCsvDTO> parseCSV(String fileName) throws IOException {
         try (FileReader reader = new FileReader(fileName)) {
-            CsvToBean<TransactionDTO> csvToBean = new CsvToBeanBuilder<TransactionDTO>(reader)
-                    .withType(TransactionDTO.class)
+            CsvToBean<TransactionCsvDTO> csvToBean = new CsvToBeanBuilder<TransactionCsvDTO>(reader)
+                    .withType(TransactionCsvDTO.class)
                     .withIgnoreLeadingWhiteSpace(true)
                     .build();
             return csvToBean.parse();
         }
     }
 
-    private List<Transaction> mapToTransactions(List<TransactionDTO> transactionDTOs) {
+    private List<Transaction> mapToTransactions(List<TransactionCsvDTO> transactionDTOs) {
         return transactionDTOs.stream().map(dto -> {
             Account senderAccount = accountRepository.findById(dto.getSenderAccountId())
                     .orElseThrow(() -> new RuntimeException("Sender Account not found: " + dto.getSenderAccountId()));
@@ -69,7 +69,7 @@ public class TransactionImporter {
 
             LocalDateTime timestamp = LocalDateTime.parse(dto.getTimestamp(), formatter);
 
-            return new Transaction(null, dto.getAmount(), dto.getCurrencyId(), dto.getMessage(), timestamp, senderAccount, receiverAccount);
+            return new Transaction(null, dto.getAmount(), dto.getCurrencyId(), dto.getMessage(), timestamp, senderAccount.getAccountId(), receiverAccount.getAccountId());
         }).collect(Collectors.toList());
     }
 

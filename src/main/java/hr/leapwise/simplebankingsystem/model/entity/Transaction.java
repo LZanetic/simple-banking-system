@@ -19,12 +19,10 @@ public class Transaction {
     private String message;
     private LocalDateTime timestamp;
 
-    @ManyToOne
     @JoinColumn(name = "sender_account_id")
-    private Account senderAccount;
+    private Long senderAccountId;
 
-    @ManyToOne
     @JoinColumn(name = "receiver_account_id")
-    private Account receiverAccount;
+    private Long receiverAccountId;
 }
 
