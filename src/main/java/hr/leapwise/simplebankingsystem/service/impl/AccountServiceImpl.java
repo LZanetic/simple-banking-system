@@ -36,11 +36,11 @@ public class AccountServiceImpl implements AccountService {
             List<Transaction> sentTransactions = transactionRepository.findByAllSentByDate(account.getAccountId(), startDate);
             List<Transaction> receivedTransactions = transactionRepository.findByAllReceivedByDate(account.getAccountId(), startDate);
 
-            BigDecimal turnover = sentTransactions
+            BigDecimal turnover = receivedTransactions
                     .stream()
                     .map(Transaction::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add)
-                    .subtract(receivedTransactions
+                    .subtract(sentTransactions
                             .stream()
                             .map(Transaction::getAmount)
                             .reduce(BigDecimal.ZERO, BigDecimal::add));
