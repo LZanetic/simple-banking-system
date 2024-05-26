@@ -23,11 +23,5 @@ public class Account {
     private String currencyId;
     @JoinColumn(name = "customer_id")
     private Long customerId;
-
-    @OneToMany(mappedBy = "senderAccountId", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Transaction> sentTransactions;
-
-    @OneToMany(mappedBy = "receiverAccountId", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Transaction> receivedTransactions;
 }
 

@@ -16,3 +16,7 @@ spring:
 server:
   servlet:
     context-path: /simple-banking-system
+
+turnover:
+  cron:
+    expression: "0 0 0 1 * *"

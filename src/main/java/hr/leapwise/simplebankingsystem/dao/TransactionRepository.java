@@ -22,4 +22,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             " AND (:amountLessThan IS NULL OR t.amount < :amountLessThan)" +
             " ORDER BY t.timestamp DESC")
     List<Transaction> findByAccountIdAndParams(Long accountId, String currencyId, String message, Long senderAccountId, Long receiverAccountId, LocalDateTime dateBefore, LocalDateTime dateAfter, BigDecimal amountGreaterThan, BigDecimal amountLessThan);
+
+    @Query("SELECT t FROM Transaction t WHERE t.senderAccountId = :senderAccountId AND t.timestamp >= :date")
+    List<Transaction> findByAllSentByDate(Long senderAccountId, LocalDateTime date);
+
+    @Query("SELECT t FROM Transaction t WHERE t.receiverAccountId = :receiverAccountId AND t.timestamp >= :date")
+    List<Transaction> findByAllReceivedByDate(Long receiverAccountId, LocalDateTime date);
 }
