@@ -3,6 +3,7 @@ package hr.leapwise.simplebankingsystem.config;
 import hr.leapwise.simplebankingsystem.exception.IncorrectParamException;
 import hr.leapwise.simplebankingsystem.exception.InsufficientFundsException;
 import hr.leapwise.simplebankingsystem.exception.ResourceNotFoundException;
+import lombok.Getter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import java.util.HashMap;
 import java.util.Map;
 
+@Getter
 class ErrorResponse {
     private String message;
     private String details;
@@ -23,17 +25,8 @@ class ErrorResponse {
         this.details = details;
     }
 
-    // Getters and setters
-    public String getMessage() {
-        return message;
-    }
-
     public void setMessage(String message) {
         this.message = message;
-    }
-
-    public String getDetails() {
-        return details;
     }
 
     public void setDetails(String details) {

@@ -24,6 +24,10 @@ public class AccountServiceImpl implements AccountService {
     @Autowired
     private TransactionRepository transactionRepository;
 
+    /**
+     * Updates the turnover for all accounts by subtracting the sum of sent transactions from the sum of received transactions
+     * for the past month.
+     */
     @Transactional
     @Override
     public void updateTurnover() {

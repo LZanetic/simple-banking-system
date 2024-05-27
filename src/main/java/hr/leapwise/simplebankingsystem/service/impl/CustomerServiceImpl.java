@@ -22,6 +22,13 @@ public class CustomerServiceImpl implements CustomerService {
     @Autowired
     private CustomerMapper customerMapper;
 
+    /**
+     * Retrieves a customer by their ID and returns their corresponding DTO.
+     *
+     * @param  customerId  the ID of the customer to retrieve
+     * @return             the DTO representation of the customer, or null if not found
+     * @throws ResourceNotFoundException if the customer with the given ID is not found
+     */
     @Override
     public CustomerDTO getCustomerById(Long customerId) {
         Optional<Customer> customer = customerRepository.findById(customerId);

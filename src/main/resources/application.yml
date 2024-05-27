@@ -12,6 +12,14 @@ spring:
     defer-datasource-initialization: true
   h2:
     console.enabled: true
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: zaneticluka@gmail.com
+    password: pass
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
 
 server:
   servlet:
