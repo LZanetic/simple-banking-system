@@ -2,6 +2,7 @@ package hr.leapwise.simplebankingsystem.config;
 
 import hr.leapwise.simplebankingsystem.exception.IncorrectParamException;
 import hr.leapwise.simplebankingsystem.exception.InsufficientFundsException;
+import hr.leapwise.simplebankingsystem.exception.MailSendException;
 import hr.leapwise.simplebankingsystem.exception.ResourceNotFoundException;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
@@ -52,6 +53,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IncorrectParamException.class)
     public ResponseEntity<ErrorResponse> handleIncorrectParamException(IncorrectParamException ex) {
         ErrorResponse errorResponse = new ErrorResponse(ex.getMessage(), "Incorrect parameter");
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(MailSendException.class)
+    public ResponseEntity<ErrorResponse> handleMailSendException(MailSendException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage(), "Failed to send email");
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 

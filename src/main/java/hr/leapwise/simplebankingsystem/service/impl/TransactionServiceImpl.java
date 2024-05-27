@@ -6,6 +6,7 @@ import hr.leapwise.simplebankingsystem.dao.TransactionRepository;
 import hr.leapwise.simplebankingsystem.event.TransactionProcessedEvent;
 import hr.leapwise.simplebankingsystem.exception.IncorrectParamException;
 import hr.leapwise.simplebankingsystem.exception.InsufficientFundsException;
+import hr.leapwise.simplebankingsystem.exception.MailSendException;
 import hr.leapwise.simplebankingsystem.exception.ResourceNotFoundException;
 import hr.leapwise.simplebankingsystem.mapper.CustomerMapper;
 import hr.leapwise.simplebankingsystem.mapper.FilterParamMapper;
@@ -21,6 +22,7 @@ import hr.leapwise.simplebankingsystem.service.TransactionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.mail.MailException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,15 +56,16 @@ public class TransactionServiceImpl implements TransactionService {
 
 
     /**
-     * Creates a new transaction and updates the sender and receiver accounts.
+     * Creates a new transaction and performs the necessary account balance updates.
      *
-     * @param  transactionDTO  the transaction data transfer object containing the transaction details
-     * @return                 the ID of the newly created transaction
-     * @throws IncorrectParamException  if the sender and receiver accounts are the same
-     * @throws ResourceNotFoundException  if the sender or receiver account is not found
-     * @throws InsufficientFundsException  if the sender account does not have sufficient funds
+     * @param  transactionDTO  the transaction details
+     * @return                  the ID of the created transaction
+     * @throws IncorrectParamException    if the sender and receiver accounts are the same
+     * @throws ResourceNotFoundException   if the sender or receiver accounts are not found
+     * @throws InsufficientFundsException  if the sender account does not have enough funds
+     * @throws MailSendException           if there is an error sending an email
      */
-    @Transactional
+    @Transactional(noRollbackFor = MailException.class)
     @Override
     public Long createTransaction(TransactionDTO transactionDTO) {
         Transaction transaction = transactionMapper.mapToTransactionEntity(transactionDTO);
@@ -73,29 +76,26 @@ public class TransactionServiceImpl implements TransactionService {
                 () -> new ResourceNotFoundException("Sender Account not found"));
         Customer senderCustomer = customerRepository.findById(senderAccount.getCustomerId()).orElseThrow(
                 () -> new ResourceNotFoundException("Sender Customer not found"));
-        Optional<Account> receiverAccountOpt = accountRepository.findById(transactionDTO.getReceiverAccountId());
 
-        if(receiverAccountOpt.isEmpty()) {
-            log.info("Receiver Account not found");
-            eventPublisher.publishEvent(
-                    new TransactionProcessedEvent(this, buildEmailDto(senderCustomer, transaction, senderAccount, "send", "failed")));
-            throw new ResourceNotFoundException("Receiver Account not found");
-        }
-        Account receiverAccount = receiverAccountOpt.get();
+        Account receiverAccount = accountRepository.findById(transactionDTO.getReceiverAccountId())
+                .orElseThrow(() -> {
+                    log.info("Receiver Account not found");
+                    eventPublisher.publishEvent(new TransactionProcessedEvent(this, buildEmailDto(senderCustomer, transaction, senderAccount, "send", "failed")));
+                    return new ResourceNotFoundException("Receiver Account not found");
+                });
+        Customer receiverCustomer = customerRepository.findById(receiverAccount.getCustomerId())
+                .orElseThrow(() -> {
+                    log.info("Receiver Customer not found");
+                    eventPublisher.publishEvent(new TransactionProcessedEvent(this, buildEmailDto(senderCustomer, transaction, senderAccount, "send", "failed")));
+                    return new ResourceNotFoundException("Receiver Customer not found");
+                });
 
-        Optional<Customer> receiverCustomerOpt = customerRepository.findById(receiverAccount.getCustomerId());
-        if(receiverCustomerOpt.isEmpty()) {
-            log.info("Receiver Customer not found");
-            eventPublisher.publishEvent(
-                    new TransactionProcessedEvent(this, buildEmailDto(senderCustomer, transaction, senderAccount, "send", "failed")));
-            throw new ResourceNotFoundException("Receiver Customer not found");
+        if (senderAccount.getBalance() < transaction.getAmount().doubleValue()) {
+            eventPublisher.publishEvent(new TransactionProcessedEvent(this, buildEmailDto(senderCustomer, transaction, senderAccount, "send", "failed")));
+            throw new InsufficientFundsException("Insufficient funds");
         }
-        Customer receiverCustomer = receiverCustomerOpt.get();
 
         try {
-            if (senderAccount.getBalance() < transaction.getAmount().doubleValue())
-                throw new InsufficientFundsException("Insufficient funds");
-
             transaction.setSenderAccountId(senderAccount.getAccountId());
             transaction.setReceiverAccountId(receiverAccount.getAccountId());
             senderAccount.setBalance(senderAccount.getBalance() - transaction.getAmount().doubleValue());
@@ -105,7 +105,6 @@ public class TransactionServiceImpl implements TransactionService {
             accountRepository.save(receiverAccount);
 
             Long transactionId = transactionRepository.save(transaction).getTransactionId();
-            log.info("Transaction created: {}", transaction);
 
             eventPublisher.publishEvent(
                     new TransactionProcessedEvent(this, buildEmailDto(senderCustomer, transaction, senderAccount, "send", "success")));
@@ -113,10 +112,12 @@ public class TransactionServiceImpl implements TransactionService {
                     new TransactionProcessedEvent(this, buildEmailDto(receiverCustomer, transaction, receiverAccount, "receive", "success")));
             return transactionId;
         } catch (Exception e){
-            log.info("Transaction failed: {}", transaction);
-            eventPublisher.publishEvent(
-                    new TransactionProcessedEvent(this, buildEmailDto(senderCustomer, transaction, senderAccount, "send", "failed")));
-            throw e;
+            if(!(e instanceof MailException)) {
+                log.info("Transaction failed: {}", transaction);
+                eventPublisher.publishEvent(new TransactionProcessedEvent(this, buildEmailDto(senderCustomer, transaction, senderAccount, "send", "failed")));
+                throw e;
+            }
+            throw new MailSendException("Failed to send email, but completed transaction successfully");
         }
     }
 
@@ -168,14 +169,11 @@ public class TransactionServiceImpl implements TransactionService {
      * @return                 the EmailDTO object with the populated fields
      */
     private EmailDTO buildEmailDto(Customer customer, Transaction transaction, Account account, String status, String action) {
-        BigDecimal newBalance;
-        if(action.equalsIgnoreCase("send")) {
-             newBalance = BigDecimal.valueOf(account.getBalance() - transaction.getAmount().doubleValue());
-        } else {
-             newBalance = BigDecimal.valueOf(account.getBalance() + transaction.getAmount().doubleValue());
-        }
+        BigDecimal newBalance = action.equalsIgnoreCase("send") ?
+                BigDecimal.valueOf(account.getBalance() - transaction.getAmount().doubleValue()) :
+                BigDecimal.valueOf(account.getBalance() + transaction.getAmount().doubleValue());
 
-        if(Objects.equals(status, "failed")) newBalance = BigDecimal.valueOf(account.getBalance());
+        if(!status.equals("success")) newBalance = BigDecimal.valueOf(account.getBalance());
 
         return EmailDTO.builder()
                 .to(customer.getEmail())
