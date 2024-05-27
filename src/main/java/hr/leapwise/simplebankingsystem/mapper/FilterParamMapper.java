@@ -7,7 +7,7 @@ import org.mapstruct.factory.Mappers;
 
 import java.util.Map;
 
-@Mapper(componentModel = "spring")
+@Mapper
 public interface FilterParamMapper {
 
     FilterParamMapper INSTANCE = Mappers.getMapper(FilterParamMapper.class);

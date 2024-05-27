@@ -1,12 +1,12 @@
 package hr.leapwise.simplebankingsystem.model.dto;
 
-import hr.leapwise.simplebankingsystem.model.entity.Account;
-import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-
-import java.util.List;
+import lombok.NoArgsConstructor;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class CustomerDTO {
     private Long customerId;
     private String name;
